@@ -210,7 +210,7 @@ Una vez desplegada, se genera una dirección web pública que permite acceder al
 Link de la aplicación:
 
 ```
-PENDIENTE DE AGREGAR LINK DE LA PAGINA WEB
+https://sistema-de-control-de-accesos-equipo-7.onrender.com/
 ```
 
 El usuario solamente necesita abrir el enlace en su navegador.
