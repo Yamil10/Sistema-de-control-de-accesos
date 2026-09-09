@@ -1,4 +1,5 @@
 const API = "/api/accesos";
+const API_RESIDENTES = "/api/residentes";
 
 const TIPOS = [
     "Residente",
@@ -21,6 +22,7 @@ const TIPO_CLASES = {
 };
 
 let accesos = [];
+let residentes = [];
 let filtroActual = "";
 
 const $ = (id) => document.getElementById(id);
@@ -29,6 +31,9 @@ const formEntrada = $("formEntrada");
 const filtroTipo = $("filtroTipo");
 const dentroLista = $("dentroLista");
 const historialTabla = $("historialTabla");
+const grupoNombre = $("grupoNombre");
+const grupoResidente = $("grupoResidente");
+const residenteSelect = $("residente");
 
 const esc = (valor = "") =>
     String(valor).replace(/[&<>"']/g, (c) => ({
@@ -68,6 +73,45 @@ async function cargarAccesos() {
         dentroLista.innerHTML = `<p class="vacio">${esc(err.message)}</p>`;
         historialTabla.innerHTML = "";
     }
+}
+
+async function cargarResidentes() {
+    try {
+        const res = await fetch(API_RESIDENTES);
+        if (!res.ok) return;
+        residentes = await res.json();
+        residenteSelect.innerHTML =
+            '<option value="">Selecciona un residente</option>' +
+            residentes
+                .map(
+                    (r) =>
+                        `<option value="${esc(r.nombre)}" data-departamento="${esc(r.departamento)}">${esc(r.nombre)} — Depto ${esc(r.departamento)}</option>`
+                )
+                .join("");
+    } catch (err) {
+        residenteSelect.innerHTML = '<option value="">No se pudieron cargar los residentes</option>';
+    }
+}
+
+function actualizarFormResidente() {
+    const esResidente = $("tipo").value === "Residente";
+    grupoNombre.hidden = esResidente;
+    grupoResidente.hidden = !esResidente;
+    $("nombre").required = !esResidente;
+    residenteSelect.required = esResidente;
+    $("departamento").disabled = esResidente;
+
+    if (esResidente) {
+        sincronizarDepartamentoResidente();
+        residenteSelect.focus();
+    } else {
+        $("departamento").value = "";
+    }
+}
+
+function sincronizarDepartamentoResidente() {
+    const opt = residenteSelect.selectedOptions[0];
+    $("departamento").value = opt && opt.dataset.departamento ? opt.dataset.departamento : "";
 }
 
 function renderTodos() {
@@ -170,8 +214,12 @@ function tipoClase(tipo) {
 formEntrada.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    const esResidente = $("tipo").value === "Residente";
+
     const payload = {
-        nombre: $("nombre").value.trim(),
+        nombre: esResidente
+            ? residenteSelect.value.trim()
+            : $("nombre").value.trim(),
         tipo: $("tipo").value,
         departamento: $("departamento").value.trim(),
         placas: $("placas").value.trim()
@@ -191,6 +239,7 @@ formEntrada.addEventListener("submit", async (e) => {
         }
 
         formEntrada.reset();
+        actualizarFormResidente();
         $("nombre").focus();
         mostrarMensaje(`Entrada registrada para ${payload.nombre}.`, "ok");
         await cargarAccesos();
@@ -221,6 +270,9 @@ dentroLista.addEventListener("click", async (e) => {
     }
 });
 
+$("tipo").addEventListener("change", actualizarFormResidente);
+residenteSelect.addEventListener("change", sincronizarDepartamentoResidente);
+
 filtroTipo.addEventListener("change", () => {
     filtroActual = filtroTipo.value;
     renderHistorial();
@@ -242,4 +294,5 @@ function actualizarReloj() {
 
 setInterval(actualizarReloj, 1000);
 actualizarReloj();
+cargarResidentes();
 cargarAccesos();
