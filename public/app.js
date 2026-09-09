@@ -1,42 +1,43 @@
-const form = document.getElementById("accessForm");
-
-const tipo = document.getElementById("tipo");
-
-const residenteContainer =
-    document.getElementById("residenteContainer");
-
-const visitanteContainer =
-    document.getElementById("visitanteContainer");
+const departamentoSelect =
+    document.getElementById("departamento");
 
 const residenteSelect =
     document.getElementById("residente");
 
-const nombreInput =
-    document.getElementById("nombre");
+const visitaForm =
+    document.getElementById("visitaForm");
 
-const departamentoSelect =
-    document.getElementById("departamento");
+const residenteForm =
+    document.getElementById("residenteForm");
 
-const placasInput =
-    document.getElementById("placas");
+const timestampInput =
+    document.getElementById("timestamp");
 
-const accessTable =
-    document.getElementById("accessTable");
+const visitasTable =
+    document.getElementById("visitasTable");
 
-const historyTable =
-    document.getElementById("historyTable");
+const residentesTable =
+    document.getElementById("residentesTable");
 
-const filtroTipo =
-    document.getElementById("filtroTipo");
 
-const personasDentro =
-    document.getElementById("personasDentro");
+// ==========================================
+// MOSTRAR FECHA Y HORA ACTUAL
+// ==========================================
 
-const totalAccesos =
-    document.getElementById("totalAccesos");
+function actualizarTimestamp() {
 
-const residentesDentro =
-    document.getElementById("residentesDentro");
+    const ahora = new Date();
+
+    timestampInput.value =
+        ahora.toLocaleString("es-MX", {
+            dateStyle: "short",
+            timeStyle: "short"
+        });
+}
+
+actualizarTimestamp();
+
+setInterval(actualizarTimestamp, 1000);
 
 
 // ==========================================
@@ -45,13 +46,63 @@ const residentesDentro =
 
 async function cargarResidentes() {
 
-    try {
+    const response =
+        await fetch("/api/residentes");
 
-        const response =
-            await fetch("/api/residentes");
+    const residentes =
+        await response.json();
+
+    return residentes;
+}
+
+
+// ==========================================
+// CAMBIAR DEPARTAMENTO
+// ==========================================
+
+departamentoSelect.addEventListener(
+    "change",
+    async () => {
+
+        const departamento =
+            departamentoSelect.value;
+
+        residenteSelect.innerHTML = "";
+
+        if (!departamento) {
+
+            residenteSelect.disabled = true;
+
+            residenteSelect.innerHTML = `
+                <option value="">
+                    Primero selecciona un departamento
+                </option>
+            `;
+
+            return;
+        }
 
         const residentes =
-            await response.json();
+            await cargarResidentes();
+
+        const residentesDepartamento =
+            residentes.filter(
+                residente =>
+                    residente.departamento === departamento
+            );
+
+        residenteSelect.disabled = false;
+
+        if (residentesDepartamento.length === 0) {
+
+            residenteSelect.innerHTML = `
+                <option value="">
+                    No hay residentes registrados
+                </option>
+            `;
+
+            return;
+        }
 
         residenteSelect.innerHTML = `
             <option value="">
@@ -59,327 +110,71 @@ async function cargarResidentes() {
             </option>
         `;
 
-        residentes.forEach(residente => {
+        residentesDepartamento.forEach(
+            residente => {
 
-            const option =
-                document.createElement("option");
+                const option =
+                    document.createElement("option");
 
-            option.value = residente.id;
+                option.value =
+                    residente.id;
 
-            option.textContent =
-                `${residente.nombre} - Depto. ${residente.departamento}`;
+                option.textContent =
+                    residente.nombre;
 
-            option.dataset.nombre =
-                residente.nombre;
+                residenteSelect.appendChild(option);
 
-            option.dataset.departamento =
-                residente.departamento;
-
-            residenteSelect.appendChild(option);
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            "Error al cargar residentes:",
-            error
+            }
         );
 
     }
-}
+);
 
 
 // ==========================================
-// CAMBIAR TIPO DE ACCESO
+// REGISTRAR VISITA
 // ==========================================
 
-tipo.addEventListener("change", () => {
-
-    if (tipo.value === "Residente") {
-
-        residenteContainer.classList.remove("hidden");
-
-        visitanteContainer.classList.add("hidden");
-
-        nombreInput.value = "";
-
-        nombreInput.required = false;
-
-        residenteSelect.required = true;
-
-        departamentoSelect.disabled = true;
-
-    } else {
-
-        residenteContainer.classList.add("hidden");
-
-        visitanteContainer.classList.remove("hidden");
-
-        nombreInput.required = true;
-
-        residenteSelect.required = false;
-
-        residenteSelect.value = "";
-
-        departamentoSelect.disabled = false;
-
-    }
-
-});
-
-
-// ==========================================
-// SELECCIONAR RESIDENTE
-// ==========================================
-
-residenteSelect.addEventListener("change", () => {
-
-    const option =
-        residenteSelect.options[
-            residenteSelect.selectedIndex
-        ];
-
-    if (!option || !option.dataset.nombre) {
-        return;
-    }
-
-    nombreInput.value =
-        option.dataset.nombre;
-
-    departamentoSelect.value =
-        option.dataset.departamento;
-
-});
-
-
-// ==========================================
-// CARGAR ACCESOS
-// ==========================================
-
-async function cargarAccesos() {
-
-    try {
-
-        const response =
-            await fetch("/api/accesos");
-
-        const accesos =
-            await response.json();
-
-        mostrarAccesos(accesos);
-
-        mostrarHistorial(accesos);
-
-        mostrarEstadisticas(accesos);
-
-    } catch (error) {
-
-        console.error(
-            "Error al cargar accesos:",
-            error
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// MOSTRAR PERSONAS DENTRO
-// ==========================================
-
-function mostrarAccesos(accesos) {
-
-    accessTable.innerHTML = "";
-
-    const filtro =
-        filtroTipo.value;
-
-    let personasDentro =
-        accesos.filter(
-            acceso => acceso.salida === null
-        );
-
-    if (filtro !== "Todos") {
-
-        personasDentro =
-            personasDentro.filter(
-                acceso => acceso.tipo === filtro
-            );
-
-    }
-
-    if (personasDentro.length === 0) {
-
-        accessTable.innerHTML = `
-            <tr>
-                <td colspan="6" class="empty">
-                    No hay personas dentro.
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    personasDentro.forEach(acceso => {
-
-        const row =
-            document.createElement("tr");
-
-        row.innerHTML = `
-            <td>${acceso.nombre}</td>
-
-            <td>${acceso.tipo}</td>
-
-            <td>${acceso.departamento}</td>
-
-            <td>${acceso.placas || "-"}</td>
-
-            <td>${acceso.entrada}</td>
-
-            <td>
-                <button
-                    class="exit-button"
-                    onclick="registrarSalida(${acceso.id})">
-                    Registrar salida
-                </button>
-            </td>
-        `;
-
-        accessTable.appendChild(row);
-
-    });
-
-}
-
-
-// ==========================================
-// MOSTRAR HISTORIAL
-// ==========================================
-
-function mostrarHistorial(accesos) {
-
-    historyTable.innerHTML = "";
-
-    accesos.forEach(acceso => {
-
-        const row =
-            document.createElement("tr");
-
-        row.innerHTML = `
-            <td>${acceso.nombre}</td>
-
-            <td>${acceso.tipo}</td>
-
-            <td>${acceso.departamento}</td>
-
-            <td>${acceso.entrada}</td>
-
-            <td>
-                ${acceso.salida || "Dentro"}
-            </td>
-        `;
-
-        historyTable.appendChild(row);
-
-    });
-
-}
-
-
-// ==========================================
-// ESTADÍSTICAS
-// ==========================================
-
-function mostrarEstadisticas(accesos) {
-
-    const dentro =
-        accesos.filter(
-            acceso => acceso.salida === null
-        );
-
-    const residentes =
-        dentro.filter(
-            acceso => acceso.tipo === "Residente"
-        );
-
-    personasDentro.textContent =
-        dentro.length;
-
-    totalAccesos.textContent =
-        accesos.length;
-
-    residentesDentro.textContent =
-        residentes.length;
-
-}
-
-
-// ==========================================
-// REGISTRAR ENTRADA
-// ==========================================
-
-form.addEventListener("submit", async (event) => {
-
-    event.preventDefault();
-
-    let nombre;
-
-    let departamento =
-        departamentoSelect.value;
-
-    const tipoSeleccionado =
-        tipo.value;
-
-    if (tipoSeleccionado === "Residente") {
-
-        const option =
-            residenteSelect.options[
-                residenteSelect.selectedIndex
-            ];
-
-        if (!option || !option.dataset.nombre) {
+visitaForm.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+        const departamento =
+            departamentoSelect.value;
+
+        const residenteId =
+            residenteSelect.value;
+
+        const visitante =
+            document.getElementById(
+                "visitante"
+            ).value.trim();
+
+        const tipo =
+            document.getElementById(
+                "tipo"
+            ).value;
+
+
+        if (
+            !departamento ||
+            !residenteId ||
+            !visitante ||
+            !tipo
+        ) {
 
             alert(
-                "Selecciona un residente."
+                "Completa todos los campos."
             );
 
             return;
         }
 
-        nombre =
-            option.dataset.nombre;
-
-        departamento =
-            option.dataset.departamento;
-
-    } else {
-
-        nombre =
-            nombreInput.value.trim();
-
-    }
-
-
-    if (!nombre ||
-        !tipoSeleccionado ||
-        !departamento) {
-
-        alert(
-            "Completa todos los campos obligatorios."
-        );
-
-        return;
-
-    }
-
-
-    try {
 
         const response =
-            await fetch("/api/accesos", {
+            await fetch("/api/visitas", {
 
                 method: "POST",
 
@@ -390,14 +185,13 @@ form.addEventListener("submit", async (event) => {
 
                 body: JSON.stringify({
 
-                    nombre: nombre,
+                    departamento,
 
-                    tipo: tipoSeleccionado,
+                    residenteId,
 
-                    departamento: departamento,
+                    visitante,
 
-                    placas:
-                        placasInput.value.trim()
+                    tipo
 
                 })
 
@@ -413,72 +207,84 @@ form.addEventListener("submit", async (event) => {
             alert(data.error);
 
             return;
-
         }
 
 
         alert(
-            "Entrada registrada correctamente."
+            "Visita registrada correctamente."
         );
 
 
-        form.reset();
+        visitaForm.reset();
+
+        residenteSelect.disabled = true;
+
+        residenteSelect.innerHTML = `
+            <option value="">
+                Primero selecciona un departamento
+            </option>
+        `;
 
 
-        residenteContainer
-            .classList.add("hidden");
+        actualizarTimestamp();
 
-        visitanteContainer
-            .classList.remove("hidden");
-
-        nombreInput.required = true;
-
-        residenteSelect.required = false;
-
-        departamentoSelect.disabled = false;
-
-
-        cargarAccesos();
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            "No fue posible registrar la entrada."
-        );
+        cargarVisitas();
 
     }
-
-});
+);
 
 
 // ==========================================
-// REGISTRAR SALIDA
+// REGISTRAR NUEVO RESIDENTE
 // ==========================================
 
-async function registrarSalida(id) {
+residenteForm.addEventListener(
+    "submit",
+    async (event) => {
 
-    const confirmar =
-        confirm(
-            "¿Deseas registrar la salida de esta persona?"
-        );
-
-    if (!confirmar) {
-        return;
-    }
+        event.preventDefault();
 
 
-    try {
+        const nombre =
+            document.getElementById(
+                "nuevoNombre"
+            ).value.trim();
+
+        const departamento =
+            document.getElementById(
+                "nuevoDepartamento"
+            ).value;
+
+
+        if (!nombre || !departamento) {
+
+            alert(
+                "Completa todos los campos."
+            );
+
+            return;
+        }
+
 
         const response =
-            await fetch(
-                `/api/accesos/${id}/salida`,
-                {
-                    method: "PUT"
-                }
-            );
+            await fetch("/api/residentes", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    nombre,
+
+                    departamento
+
+                })
+
+            });
 
 
         const data =
@@ -490,40 +296,114 @@ async function registrarSalida(id) {
             alert(data.error);
 
             return;
-
         }
 
 
-        cargarAccesos();
-
-
-    } catch (error) {
-
-        console.error(error);
-
         alert(
-            "No fue posible registrar la salida."
+            "Residente registrado correctamente."
         );
 
+
+        residenteForm.reset();
+
+        cargarListaResidentes();
+
     }
+);
+
+
+// ==========================================
+// CARGAR LISTA DE VISITAS
+// ==========================================
+
+async function cargarVisitas() {
+
+    const response =
+        await fetch("/api/visitas");
+
+    const visitas =
+        await response.json();
+
+
+    visitasTable.innerHTML = "";
+
+
+    if (visitas.length === 0) {
+
+        visitasTable.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    No hay visitas registradas.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    visitas.forEach(visita => {
+
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+
+            <td>${visita.visitante}</td>
+
+            <td>${visita.departamento}</td>
+
+            <td>${visita.residente}</td>
+
+            <td>${visita.tipo}</td>
+
+            <td>${visita.timestamp}</td>
+
+        `;
+
+        visitasTable.appendChild(row);
+
+    });
 
 }
 
 
 // ==========================================
-// FILTRO
+// CARGAR LISTA DE RESIDENTES
 // ==========================================
 
-filtroTipo.addEventListener(
-    "change",
-    cargarAccesos
-);
+async function cargarListaResidentes() {
+
+    const residentes =
+        await cargarResidentes();
+
+    residentesTable.innerHTML = "";
+
+
+    residentes.forEach(residente => {
+
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+
+            <td>${residente.nombre}</td>
+
+            <td>${residente.departamento}</td>
+
+        `;
+
+        residentesTable.appendChild(row);
+
+    });
+
+}
 
 
 // ==========================================
 // INICIALIZAR
 // ==========================================
 
-cargarResidentes();
+cargarVisitas();
 
-cargarAccesos();
+cargarListaResidentes();
