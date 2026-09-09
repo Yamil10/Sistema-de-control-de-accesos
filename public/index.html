@@ -1,337 +1,409 @@
-<!DOCTYPE html>
-<html lang="es">
+const departamentoSelect =
+    document.getElementById("departamento");
 
-<head>
+const residenteSelect =
+    document.getElementById("residente");
 
-    <meta charset="UTF-8">
+const visitaForm =
+    document.getElementById("visitaForm");
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+const residenteForm =
+    document.getElementById("residenteForm");
 
-    <title>Control de Accesos</title>
+const timestampInput =
+    document.getElementById("timestamp");
 
-    <link rel="stylesheet" href="style.css">
+const visitasTable =
+    document.getElementById("visitasTable");
 
-</head>
-
-<body>
-
-<header>
-
-    <h1>Control de Accesos</h1>
-
-    <p>
-        Administración de residentes y visitas
-    </p>
-
-</header>
+const residentesTable =
+    document.getElementById("residentesTable");
 
 
-<main>
+// ==========================================
+// MOSTRAR FECHA Y HORA ACTUAL
+// ==========================================
 
-    <!-- ======================================
-         REGISTRAR VISITA
-    ======================================= -->
+function actualizarTimestamp() {
 
-    <section>
+    const ahora = new Date();
 
-        <h2>Registrar Visita</h2>
+    timestampInput.value =
+        ahora.toLocaleString("es-MX", {
+            dateStyle: "short",
+            timeStyle: "short"
+        });
+}
 
-        <form id="visitaForm">
+actualizarTimestamp();
 
-            <label for="departamento">
-                Departamento
-            </label>
-
-            <select id="departamento" required>
-
-                <option value="">
-                    Seleccionar departamento...
-                </option>
-
-                <optgroup label="Piso 1">
-                    <option value="101">101</option>
-                    <option value="102">102</option>
-                    <option value="103">103</option>
-                    <option value="104">104</option>
-                </optgroup>
-
-                <optgroup label="Piso 2">
-                    <option value="201">201</option>
-                    <option value="202">202</option>
-                    <option value="203">203</option>
-                    <option value="204">204</option>
-                </optgroup>
-
-                <optgroup label="Piso 3">
-                    <option value="301">301</option>
-                    <option value="302">302</option>
-                    <option value="303">303</option>
-                    <option value="304">304</option>
-                </optgroup>
-
-                <optgroup label="Piso 4">
-                    <option value="401">401</option>
-                    <option value="402">402</option>
-                    <option value="403">403</option>
-                    <option value="404">404</option>
-                </optgroup>
-
-                <optgroup label="Piso 5">
-                    <option value="501">501</option>
-                    <option value="502">502</option>
-                    <option value="503">503</option>
-                    <option value="504">504</option>
-                </optgroup>
-
-            </select>
+setInterval(actualizarTimestamp, 1000);
 
 
-            <label for="residente">
-                Residente
-            </label>
+// ==========================================
+// CARGAR RESIDENTES
+// ==========================================
 
-            <select id="residente" required disabled>
+async function cargarResidentes() {
 
+    const response =
+        await fetch("/api/residentes");
+
+    const residentes =
+        await response.json();
+
+    return residentes;
+}
+
+
+// ==========================================
+// CAMBIAR DEPARTAMENTO
+// ==========================================
+
+departamentoSelect.addEventListener(
+    "change",
+    async () => {
+
+        const departamento =
+            departamentoSelect.value;
+
+        residenteSelect.innerHTML = "";
+
+        if (!departamento) {
+
+            residenteSelect.disabled = true;
+
+            residenteSelect.innerHTML = `
                 <option value="">
                     Primero selecciona un departamento
                 </option>
+            `;
 
-            </select>
+            return;
+        }
 
+        const residentes =
+            await cargarResidentes();
 
-            <hr>
+        const residentesDepartamento =
+            residentes.filter(
+                residente =>
+                    residente.departamento === departamento
+            );
 
+        residenteSelect.disabled = false;
 
-            <label for="visitante">
-                Nombre del visitante
-            </label>
+        if (residentesDepartamento.length === 0) {
 
-            <input
-                type="text"
-                id="visitante"
-                placeholder="Nombre completo"
-                required
-            >
-
-
-            <label for="tipo">
-                Tipo de visitante
-            </label>
-
-            <select id="tipo" required>
-
+            residenteSelect.innerHTML = `
                 <option value="">
-                    Seleccionar tipo...
+                    No hay residentes registrados
                 </option>
+            `;
 
-                <option value="Familia">
-                    Familia
-                </option>
+            return;
+        }
 
-                <option value="Amigo">
-                    Amigo
-                </option>
+        residenteSelect.innerHTML = `
+            <option value="">
+                Seleccionar residente...
+            </option>
+        `;
 
-                <option value="Proveedor">
-                    Proveedor
-                </option>
+        residentesDepartamento.forEach(
+            residente => {
 
-                <option value="Taxi">
-                    Taxi / Uber / Didi
-                </option>
+                const option =
+                    document.createElement("option");
 
-                <option value="Técnico">
-                    Técnico
-                </option>
+                option.value =
+                    residente.id;
 
-                <option value="Repartidor">
-                    Repartidor
-                </option>
+                option.textContent =
+                    residente.nombre;
 
-                <option value="Otro">
-                    Otro
-                </option>
+                residenteSelect.appendChild(option);
 
-            </select>
+            }
+        );
 
+    }
+);
 
-            <label>
-                Fecha y hora
-            </label>
 
-            <input
-                type="text"
-                id="timestamp"
-                readonly
-            >
+// ==========================================
+// REGISTRAR VISITA
+// ==========================================
 
+visitaForm.addEventListener(
+    "submit",
+    async (event) => {
 
-            <button type="submit">
-                Registrar
-            </button>
+        event.preventDefault();
 
-        </form>
+        const departamento =
+            departamentoSelect.value;
 
-    </section>
+        const residenteId =
+            residenteSelect.value;
 
+        const visitante =
+            document.getElementById(
+                "visitante"
+            ).value.trim();
 
-    <!-- ======================================
-         REGISTRAR RESIDENTE
-    ======================================= -->
+        const tipo =
+            document.getElementById(
+                "tipo"
+            ).value;
 
-    <section>
 
-        <h2>Registrar Nuevo Residente</h2>
+        if (
+            !departamento ||
+            !residenteId ||
+            !visitante ||
+            !tipo
+        ) {
 
-        <p class="description">
-            Utiliza este formulario cuando una persona
-            se mude a un departamento.
-        </p>
+            alert(
+                "Completa todos los campos."
+            );
 
-        <form id="residenteForm">
+            return;
+        }
 
-            <label for="nuevoNombre">
-                Nombre del residente
-            </label>
 
-            <input
-                type="text"
-                id="nuevoNombre"
-                placeholder="Nombre completo"
-                required
-            >
+        const response =
+            await fetch("/api/visitas", {
 
+                method: "POST",
 
-            <label for="nuevoDepartamento">
-                Departamento
-            </label>
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-            <select
-                id="nuevoDepartamento"
-                required
-            >
+                body: JSON.stringify({
 
-                <option value="">
-                    Seleccionar departamento...
-                </option>
+                    departamento,
 
-                <optgroup label="Piso 1">
-                    <option value="101">101</option>
-                    <option value="102">102</option>
-                    <option value="103">103</option>
-                    <option value="104">104</option>
-                </optgroup>
+                    residenteId,
 
-                <optgroup label="Piso 2">
-                    <option value="201">201</option>
-                    <option value="202">202</option>
-                    <option value="203">203</option>
-                    <option value="204">204</option>
-                </optgroup>
+                    visitante,
 
-                <optgroup label="Piso 3">
-                    <option value="301">301</option>
-                    <option value="302">302</option>
-                    <option value="303">303</option>
-                    <option value="304">304</option>
-                </optgroup>
+                    tipo
 
-                <optgroup label="Piso 4">
-                    <option value="401">401</option>
-                    <option value="402">402</option>
-                    <option value="403">403</option>
-                    <option value="404">404</option>
-                </optgroup>
+                })
 
-                <optgroup label="Piso 5">
-                    <option value="501">501</option>
-                    <option value="502">502</option>
-                    <option value="503">503</option>
-                    <option value="504">504</option>
-                </optgroup>
+            });
 
-            </select>
 
+        const data =
+            await response.json();
 
-            <button type="submit">
-                Registrar Residente
-            </button>
 
-        </form>
+        if (!response.ok) {
 
-    </section>
+            alert(data.error);
 
+            return;
+        }
 
-    <!-- ======================================
-         LISTA DE VISITAS
-    ======================================= -->
 
-    <section>
+        alert(
+            "Visita registrada correctamente."
+        );
 
-        <h2>Lista de Visitas</h2>
 
-        <table>
+        visitaForm.reset();
 
-            <thead>
+        residenteSelect.disabled = true;
 
-                <tr>
+        residenteSelect.innerHTML = `
+            <option value="">
+                Primero selecciona un departamento
+            </option>
+        `;
 
-                    <th>Visitante</th>
-                    <th>Departamento</th>
-                    <th>Residente</th>
-                    <th>Tipo</th>
-                    <th>Fecha y hora</th>
 
-                </tr>
+        actualizarTimestamp();
 
-            </thead>
+        cargarVisitas();
 
-            <tbody id="visitasTable">
+    }
+);
 
-            </tbody>
 
-        </table>
+// ==========================================
+// REGISTRAR NUEVO RESIDENTE
+// ==========================================
 
-    </section>
+residenteForm.addEventListener(
+    "submit",
+    async (event) => {
 
+        event.preventDefault();
 
-    <!-- ======================================
-         LISTA DE RESIDENTES
-    ======================================= -->
 
-    <section>
+        const nombre =
+            document.getElementById(
+                "nuevoNombre"
+            ).value.trim();
 
-        <h2>Residentes Registrados</h2>
+        const departamento =
+            document.getElementById(
+                "nuevoDepartamento"
+            ).value;
 
-        <table>
 
-            <thead>
+        if (!nombre || !departamento) {
 
-                <tr>
+            alert(
+                "Completa todos los campos."
+            );
 
-                    <th>Nombre</th>
-                    <th>Departamento</th>
+            return;
+        }
 
-                </tr>
 
-            </thead>
+        const response =
+            await fetch("/api/residentes", {
 
-            <tbody id="residentesTable">
+                method: "POST",
 
-            </tbody>
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-        </table>
+                body: JSON.stringify({
 
-    </section>
+                    nombre,
 
-</main>
+                    departamento
 
+                })
 
-<script src="app.js"></script>
+            });
 
-</body>
 
-</html>
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            alert(data.error);
+
+            return;
+        }
+
+
+        alert(
+            "Residente registrado correctamente."
+        );
+
+
+        residenteForm.reset();
+
+        cargarListaResidentes();
+
+    }
+);
+
+
+// ==========================================
+// CARGAR LISTA DE VISITAS
+// ==========================================
+
+async function cargarVisitas() {
+
+    const response =
+        await fetch("/api/visitas");
+
+    const visitas =
+        await response.json();
+
+
+    visitasTable.innerHTML = "";
+
+
+    if (visitas.length === 0) {
+
+        visitasTable.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    No hay visitas registradas.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+
+    visitas.forEach(visita => {
+
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+
+            <td>${visita.visitante}</td>
+
+            <td>${visita.departamento}</td>
+
+            <td>${visita.residente}</td>
+
+            <td>${visita.tipo}</td>
+
+            <td>${visita.timestamp}</td>
+
+        `;
+
+        visitasTable.appendChild(row);
+
+    });
+
+}
+
+
+// ==========================================
+// CARGAR LISTA DE RESIDENTES
+// ==========================================
+
+async function cargarListaResidentes() {
+
+    const residentes =
+        await cargarResidentes();
+
+    residentesTable.innerHTML = "";
+
+
+    residentes.forEach(residente => {
+
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+
+            <td>${residente.nombre}</td>
+
+            <td>${residente.departamento}</td>
+
+        `;
+
+        residentesTable.appendChild(row);
+
+    });
+
+}
+
+
+// ==========================================
+// INICIALIZAR
+// ==========================================
+
+cargarVisitas();
+
+cargarListaResidentes();
