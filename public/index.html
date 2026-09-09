@@ -18,354 +18,319 @@
 
 <body>
 
-    <header>
+<header>
 
-        <h1>Control de Accesos</h1>
+    <h1>Control de Accesos</h1>
 
-        <p>
-            Sistema de registro de residentes y visitantes
+    <p>
+        Administración de residentes y visitas
+    </p>
+
+</header>
+
+
+<main>
+
+    <!-- ======================================
+         REGISTRAR VISITA
+    ======================================= -->
+
+    <section>
+
+        <h2>Registrar Visita</h2>
+
+        <form id="visitaForm">
+
+            <label for="departamento">
+                Departamento
+            </label>
+
+            <select id="departamento" required>
+
+                <option value="">
+                    Seleccionar departamento...
+                </option>
+
+                <optgroup label="Piso 1">
+                    <option value="101">101</option>
+                    <option value="102">102</option>
+                    <option value="103">103</option>
+                    <option value="104">104</option>
+                </optgroup>
+
+                <optgroup label="Piso 2">
+                    <option value="201">201</option>
+                    <option value="202">202</option>
+                    <option value="203">203</option>
+                    <option value="204">204</option>
+                </optgroup>
+
+                <optgroup label="Piso 3">
+                    <option value="301">301</option>
+                    <option value="302">302</option>
+                    <option value="303">303</option>
+                    <option value="304">304</option>
+                </optgroup>
+
+                <optgroup label="Piso 4">
+                    <option value="401">401</option>
+                    <option value="402">402</option>
+                    <option value="403">403</option>
+                    <option value="404">404</option>
+                </optgroup>
+
+                <optgroup label="Piso 5">
+                    <option value="501">501</option>
+                    <option value="502">502</option>
+                    <option value="503">503</option>
+                    <option value="504">504</option>
+                </optgroup>
+
+            </select>
+
+
+            <label for="residente">
+                Residente
+            </label>
+
+            <select id="residente" required disabled>
+
+                <option value="">
+                    Primero selecciona un departamento
+                </option>
+
+            </select>
+
+
+            <hr>
+
+
+            <label for="visitante">
+                Nombre del visitante
+            </label>
+
+            <input
+                type="text"
+                id="visitante"
+                placeholder="Nombre completo"
+                required
+            >
+
+
+            <label for="tipo">
+                Tipo de visitante
+            </label>
+
+            <select id="tipo" required>
+
+                <option value="">
+                    Seleccionar tipo...
+                </option>
+
+                <option value="Familia">
+                    Familia
+                </option>
+
+                <option value="Amigo">
+                    Amigo
+                </option>
+
+                <option value="Proveedor">
+                    Proveedor
+                </option>
+
+                <option value="Taxi">
+                    Taxi / Uber / Didi
+                </option>
+
+                <option value="Técnico">
+                    Técnico
+                </option>
+
+                <option value="Repartidor">
+                    Repartidor
+                </option>
+
+                <option value="Otro">
+                    Otro
+                </option>
+
+            </select>
+
+
+            <label>
+                Fecha y hora
+            </label>
+
+            <input
+                type="text"
+                id="timestamp"
+                readonly
+            >
+
+
+            <button type="submit">
+                Registrar
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <!-- ======================================
+         REGISTRAR RESIDENTE
+    ======================================= -->
+
+    <section>
+
+        <h2>Registrar Nuevo Residente</h2>
+
+        <p class="description">
+            Utiliza este formulario cuando una persona
+            se mude a un departamento.
         </p>
 
-    </header>
+        <form id="residenteForm">
 
+            <label for="nuevoNombre">
+                Nombre del residente
+            </label>
 
-    <main>
+            <input
+                type="text"
+                id="nuevoNombre"
+                placeholder="Nombre completo"
+                required
+            >
 
-        <!-- ==========================================
-             REGISTRAR ENTRADA
-        =========================================== -->
 
-        <section class="form-container">
+            <label for="nuevoDepartamento">
+                Departamento
+            </label>
 
-            <h2>Registrar Entrada</h2>
+            <select
+                id="nuevoDepartamento"
+                required
+            >
 
-            <form id="accessForm">
+                <option value="">
+                    Seleccionar departamento...
+                </option>
 
-                <label for="tipo">
-                    Tipo de acceso:
-                </label>
+                <optgroup label="Piso 1">
+                    <option value="101">101</option>
+                    <option value="102">102</option>
+                    <option value="103">103</option>
+                    <option value="104">104</option>
+                </optgroup>
 
-                <select id="tipo" required>
+                <optgroup label="Piso 2">
+                    <option value="201">201</option>
+                    <option value="202">202</option>
+                    <option value="203">203</option>
+                    <option value="204">204</option>
+                </optgroup>
 
-                    <option value="">
-                        Seleccionar...
-                    </option>
+                <optgroup label="Piso 3">
+                    <option value="301">301</option>
+                    <option value="302">302</option>
+                    <option value="303">303</option>
+                    <option value="304">304</option>
+                </optgroup>
 
-                    <option value="Residente">
-                        Residente
-                    </option>
+                <optgroup label="Piso 4">
+                    <option value="401">401</option>
+                    <option value="402">402</option>
+                    <option value="403">403</option>
+                    <option value="404">404</option>
+                </optgroup>
 
-                    <option value="Familia">
-                        Familia
-                    </option>
+                <optgroup label="Piso 5">
+                    <option value="501">501</option>
+                    <option value="502">502</option>
+                    <option value="503">503</option>
+                    <option value="504">504</option>
+                </optgroup>
 
-                    <option value="Proveedor">
-                        Proveedor
-                    </option>
+            </select>
 
-                    <option value="Taxi">
-                        Taxi / Uber / Didi
-                    </option>
 
-                    <option value="Técnico">
-                        Técnico
-                    </option>
+            <button type="submit">
+                Registrar Residente
+            </button>
 
-                    <option value="Repartidor">
-                        Repartidor
-                    </option>
+        </form>
 
-                    <option value="Otro">
-                        Otro
-                    </option>
+    </section>
 
-                </select>
 
+    <!-- ======================================
+         LISTA DE VISITAS
+    ======================================= -->
 
-                <!-- RESIDENTE -->
+    <section>
 
-                <div id="residenteContainer" class="hidden">
+        <h2>Lista de Visitas</h2>
 
-                    <label for="residente">
-                        Residente:
-                    </label>
+        <table>
 
-                    <select id="residente">
+            <thead>
 
-                        <option value="">
-                            Seleccionar residente...
-                        </option>
+                <tr>
 
-                    </select>
+                    <th>Visitante</th>
+                    <th>Departamento</th>
+                    <th>Residente</th>
+                    <th>Tipo</th>
+                    <th>Fecha y hora</th>
 
-                </div>
+                </tr>
 
+            </thead>
 
-                <!-- VISITANTE -->
+            <tbody id="visitasTable">
 
-                <div id="visitanteContainer">
+            </tbody>
 
-                    <label for="nombre">
-                        Nombre:
-                    </label>
+        </table>
 
-                    <input
-                        type="text"
-                        id="nombre"
-                        placeholder="Nombre completo"
-                    >
+    </section>
 
-                </div>
 
+    <!-- ======================================
+         LISTA DE RESIDENTES
+    ======================================= -->
 
-                <label for="departamento">
-                    Departamento:
-                </label>
+    <section>
 
-                <select id="departamento" required>
+        <h2>Residentes Registrados</h2>
 
-                    <option value="">
-                        Seleccionar departamento...
-                    </option>
+        <table>
 
-                    <optgroup label="Piso 1">
+            <thead>
 
-                        <option value="101">101</option>
-                        <option value="102">102</option>
-                        <option value="103">103</option>
-                        <option value="104">104</option>
+                <tr>
 
-                    </optgroup>
+                    <th>Nombre</th>
+                    <th>Departamento</th>
 
-                    <optgroup label="Piso 2">
+                </tr>
 
-                        <option value="201">201</option>
-                        <option value="202">202</option>
-                        <option value="203">203</option>
-                        <option value="204">204</option>
+            </thead>
 
-                    </optgroup>
+            <tbody id="residentesTable">
 
-                    <optgroup label="Piso 3">
+            </tbody>
 
-                        <option value="301">301</option>
-                        <option value="302">302</option>
-                        <option value="303">303</option>
-                        <option value="304">304</option>
+        </table>
 
-                    </optgroup>
+    </section>
 
-                    <optgroup label="Piso 4">
+</main>
 
-                        <option value="401">401</option>
-                        <option value="402">402</option>
-                        <option value="403">403</option>
-                        <option value="404">404</option>
 
-                    </optgroup>
-
-                    <optgroup label="Piso 5">
-
-                        <option value="501">501</option>
-                        <option value="502">502</option>
-                        <option value="503">503</option>
-                        <option value="504">504</option>
-
-                    </optgroup>
-
-                </select>
-
-
-                <label for="placas">
-                    Placas:
-                </label>
-
-                <input
-                    type="text"
-                    id="placas"
-                    placeholder="Opcional"
-                >
-
-
-                <button type="submit">
-                    Registrar Entrada
-                </button>
-
-            </form>
-
-        </section>
-
-
-        <!-- ==========================================
-             PERSONAS DENTRO
-        =========================================== -->
-
-        <section class="access-container">
-
-            <h2>
-                Personas dentro del edificio
-            </h2>
-
-            <div class="filter-container">
-
-                <label for="filtroTipo">
-                    Filtrar por tipo:
-                </label>
-
-                <select id="filtroTipo">
-
-                    <option value="Todos">
-                        Todos
-                    </option>
-
-                    <option value="Residente">
-                        Residentes
-                    </option>
-
-                    <option value="Familia">
-                        Familia
-                    </option>
-
-                    <option value="Proveedor">
-                        Proveedores
-                    </option>
-
-                    <option value="Taxi">
-                        Taxi / Uber / Didi
-                    </option>
-
-                    <option value="Técnico">
-                        Técnicos
-                    </option>
-
-                    <option value="Repartidor">
-                        Repartidores
-                    </option>
-
-                    <option value="Otro">
-                        Otros
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>Departamento</th>
-                        <th>Placas</th>
-                        <th>Entrada</th>
-                        <th>Acción</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="accessTable">
-                </tbody>
-
-            </table>
-
-        </section>
-
-
-        <!-- ==========================================
-             ESTADÍSTICAS
-        =========================================== -->
-
-        <section class="stats-container">
-
-            <h2>Estadísticas</h2>
-
-            <div class="stats">
-
-                <div class="stat-card">
-
-                    <h3 id="personasDentro">
-                        0
-                    </h3>
-
-                    <p>
-                        Personas dentro
-                    </p>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <h3 id="totalAccesos">
-                        0
-                    </h3>
-
-                    <p>
-                        Total de accesos
-                    </p>
-
-                </div>
-
-
-                <div class="stat-card">
-
-                    <h3 id="residentesDentro">
-                        0
-                    </h3>
-
-                    <p>
-                        Residentes dentro
-                    </p>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ==========================================
-             HISTORIAL
-        =========================================== -->
-
-        <section class="history-container">
-
-            <h2>
-                Historial de Accesos
-            </h2>
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>Nombre</th>
-                        <th>Tipo</th>
-                        <th>Departamento</th>
-                        <th>Entrada</th>
-                        <th>Salida</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="historyTable">
-                </tbody>
-
-            </table>
-
-        </section>
-
-    </main>
-
-
-    <script src="app.js"></script>
+<script src="app.js"></script>
 
 </body>
 
