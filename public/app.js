@@ -1,298 +1,529 @@
-const API = "/api/accesos";
-const API_RESIDENTES = "/api/residentes";
+const form = document.getElementById("accessForm");
 
-const TIPOS = [
-    "Residente",
-    "Familia",
-    "Proveedor",
-    "Taxi / Uber / Didi",
-    "Técnico",
-    "Repartidor",
-    "Otro"
-];
+const tipo = document.getElementById("tipo");
 
-const TIPO_CLASES = {
-    "Residente": "Residente",
-    "Familia": "Familia",
-    "Proveedor": "Proveedor",
-    "Taxi / Uber / Didi": "Taxi",
-    "Técnico": "Técnico",
-    "Repartidor": "Repartidor",
-    "Otro": "Otro"
-};
+const residenteContainer =
+    document.getElementById("residenteContainer");
 
-let accesos = [];
-let residentes = [];
-let filtroActual = "";
+const visitanteContainer =
+    document.getElementById("visitanteContainer");
 
-const $ = (id) => document.getElementById(id);
+const residenteSelect =
+    document.getElementById("residente");
 
-const formEntrada = $("formEntrada");
-const filtroTipo = $("filtroTipo");
-const dentroLista = $("dentroLista");
-const historialTabla = $("historialTabla");
-const grupoNombre = $("grupoNombre");
-const grupoResidente = $("grupoResidente");
-const residenteSelect = $("residente");
+const nombreInput =
+    document.getElementById("nombre");
 
-const esc = (valor = "") =>
-    String(valor).replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-    }[c]));
+const departamentoSelect =
+    document.getElementById("departamento");
 
-const iniciales = (nombre = "") =>
-    nombre
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((p) => p[0])
-        .join("")
-        .toUpperCase() || "?";
+const placasInput =
+    document.getElementById("placas");
 
-function mostrarMensaje(texto, tipo) {
-    const msg = $("mensaje");
-    msg.textContent = texto;
-    msg.className = "mensaje " + tipo;
-    clearTimeout(mostrarMensaje._t);
-    mostrarMensaje._t = setTimeout(() => {
-        msg.className = "mensaje";
-    }, 3500);
-}
+const accessTable =
+    document.getElementById("accessTable");
 
-async function cargarAccesos() {
-    try {
-        const res = await fetch(API);
-        if (!res.ok) throw new Error("No se pudo obtener la información.");
-        accesos = await res.json();
-        renderTodos();
-    } catch (err) {
-        dentroLista.innerHTML = `<p class="vacio">${esc(err.message)}</p>`;
-        historialTabla.innerHTML = "";
-    }
-}
+const historyTable =
+    document.getElementById("historyTable");
+
+const filtroTipo =
+    document.getElementById("filtroTipo");
+
+const personasDentro =
+    document.getElementById("personasDentro");
+
+const totalAccesos =
+    document.getElementById("totalAccesos");
+
+const residentesDentro =
+    document.getElementById("residentesDentro");
+
+
+// ==========================================
+// CARGAR RESIDENTES
+// ==========================================
 
 async function cargarResidentes() {
+
     try {
-        const res = await fetch(API_RESIDENTES);
-        if (!res.ok) return;
-        residentes = await res.json();
-        residenteSelect.innerHTML =
-            '<option value="">Selecciona un residente</option>' +
-            residentes
-                .map(
-                    (r) =>
-                        `<option value="${esc(r.nombre)}" data-departamento="${esc(r.departamento)}">${esc(r.nombre)} — Depto ${esc(r.departamento)}</option>`
-                )
-                .join("");
-    } catch (err) {
-        residenteSelect.innerHTML = '<option value="">No se pudieron cargar los residentes</option>';
-    }
-}
 
-function actualizarFormResidente() {
-    const esResidente = $("tipo").value === "Residente";
-    grupoNombre.hidden = esResidente;
-    grupoResidente.hidden = !esResidente;
-    $("nombre").required = !esResidente;
-    residenteSelect.required = esResidente;
-    $("departamento").disabled = esResidente;
+        const response =
+            await fetch("/api/residentes");
 
-    if (esResidente) {
-        sincronizarDepartamentoResidente();
-        residenteSelect.focus();
-    } else {
-        $("departamento").value = "";
-    }
-}
+        const residentes =
+            await response.json();
 
-function sincronizarDepartamentoResidente() {
-    const opt = residenteSelect.selectedOptions[0];
-    $("departamento").value = opt && opt.dataset.departamento ? opt.dataset.departamento : "";
-}
-
-function renderTodos() {
-    renderStats();
-    renderDentro();
-    renderHistorial();
-}
-
-function renderStats() {
-    const dentro = accesos.filter((a) => !a.salida).length;
-    const salidas = accesos.filter((a) => a.salida).length;
-    const vehiculos = accesos.filter((a) => a.placas && a.placas.trim() !== "").length;
-
-    $("statDentro").textContent = dentro;
-    $("statTotal").textContent = accesos.length;
-    $("statSalidas").textContent = salidas;
-    $("statVehiculos").textContent = vehiculos;
-}
-
-function renderDentro() {
-    const dentro = accesos.filter((a) => !a.salida);
-
-    if (dentro.length === 0) {
-        dentroLista.innerHTML = `<p class="vacio">No hay personas dentro del edificio.</p>`;
-        return;
-    }
-
-    dentroLista.innerHTML = dentro
-        .map((a) => `
-            <div class="persona-item">
-                <span class="avatar">${esc(iniciales(a.nombre))}</span>
-                <div class="persona-info">
-                    <div class="nombre">${esc(a.nombre)}</div>
-                    <div class="meta">
-                        <span class="badge badge-${esc(tipoClase(a.tipo))}">${esc(a.tipo)}</span>
-                        <span>• Depto ${esc(a.departamento)}</span>
-                        <span>• ${esc(a.entrada)}</span>
-                    </div>
-                </div>
-                <button class="btn btn-salida" data-id="${a.id}" title="Registrar salida">
-                    Salida
-                </button>
-            </div>
-        `)
-        .join("");
-}
-
-function renderHistorial() {
-    const filtrados = filtroActual
-        ? accesos.filter((a) => a.tipo === filtroActual)
-        : accesos;
-
-    if (filtrados.length === 0) {
-        historialTabla.innerHTML = `<p class="vacio">No hay accesos registrados${filtroActual ? ` de tipo “${esc(filtroActual)}”` : ""}.</p>`;
-        return;
-    }
-
-    const filas = [...filtrados].reverse().map((a) => {
-        const estado = a.salida
-            ? `<span class="estado fuera"><span class="punto"></span>Fuera</span>`
-            : `<span class="estado dentro"><span class="punto"></span>Dentro</span>`;
-        const placas = a.placas && a.placas.trim() !== "" ? esc(a.placas) : "—";
-
-        return `
-            <tr>
-                <td class="td-nombre">${esc(a.nombre)}</td>
-                <td><span class="badge badge-${esc(tipoClase(a.tipo))}">${esc(a.tipo)}</span></td>
-                <td>${esc(a.departamento)}</td>
-                <td>${placas}</td>
-                <td>${esc(a.entrada)}</td>
-                <td class="salida-td">${a.salida ? esc(a.salida) : "—"}</td>
-                <td>${estado}</td>
-            </tr>
+        residenteSelect.innerHTML = `
+            <option value="">
+                Seleccionar residente...
+            </option>
         `;
-    });
 
-    historialTabla.innerHTML = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th>Departamento</th>
-                    <th>Placas</th>
-                    <th>Entrada</th>
-                    <th>Salida</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>${filas.join("")}</tbody>
-        </table>
-    `;
-}
+        residentes.forEach(residente => {
 
-function tipoClase(tipo) {
-    const normalizado = (tipo || "").trim().replace(/\s+/g, " ");
-    return normalizado in TIPO_CLASES ? TIPO_CLASES[normalizado] : "Otro";
-}
+            const option =
+                document.createElement("option");
 
-formEntrada.addEventListener("submit", async (e) => {
-    e.preventDefault();
+            option.value = residente.id;
 
-    const esResidente = $("tipo").value === "Residente";
+            option.textContent =
+                `${residente.nombre} - Depto. ${residente.departamento}`;
 
-    const payload = {
-        nombre: esResidente
-            ? residenteSelect.value.trim()
-            : $("nombre").value.trim(),
-        tipo: $("tipo").value,
-        departamento: $("departamento").value.trim(),
-        placas: $("placas").value.trim()
-    };
+            option.dataset.nombre =
+                residente.nombre;
 
-    try {
-        const res = await fetch(API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            option.dataset.departamento =
+                residente.departamento;
+
+            residenteSelect.appendChild(option);
+
         });
 
-        const data = await res.json();
+    } catch (error) {
 
-        if (!res.ok) {
-            throw new Error(data.error || "No se pudo registrar la entrada.");
-        }
+        console.error(
+            "Error al cargar residentes:",
+            error
+        );
 
-        formEntrada.reset();
-        actualizarFormResidente();
-        $("nombre").focus();
-        mostrarMensaje(`Entrada registrada para ${payload.nombre}.`, "ok");
-        await cargarAccesos();
-    } catch (err) {
-        mostrarMensaje(err.message, "error");
     }
-});
-
-dentroLista.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".btn-salida");
-    if (!btn) return;
-
-    const id = btn.dataset.id;
-    const acceso = accesos.find((a) => String(a.id) === id);
-
-    try {
-        const res = await fetch(`${API}/${id}/salida`, { method: "PUT" });
-        const data = await res.json();
-
-        if (!res.ok) {
-            throw new Error(data.error || "No se pudo registrar la salida.");
-        }
-
-        mostrarMensaje(`Salida registrada para ${data.nombre}.`, "ok");
-        await cargarAccesos();
-    } catch (err) {
-        mostrarMensaje(err.message, "error");
-    }
-});
-
-$("tipo").addEventListener("change", actualizarFormResidente);
-residenteSelect.addEventListener("change", sincronizarDepartamentoResidente);
-
-filtroTipo.addEventListener("change", () => {
-    filtroActual = filtroTipo.value;
-    renderHistorial();
-});
-
-function actualizarReloj() {
-    const ahora = new Date();
-    $("hora").textContent = ahora.toLocaleTimeString("es-MX", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-    $("fecha").textContent = ahora.toLocaleDateString("es-MX", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-    });
 }
 
-setInterval(actualizarReloj, 1000);
-actualizarReloj();
+
+// ==========================================
+// CAMBIAR TIPO DE ACCESO
+// ==========================================
+
+tipo.addEventListener("change", () => {
+
+    if (tipo.value === "Residente") {
+
+        residenteContainer.classList.remove("hidden");
+
+        visitanteContainer.classList.add("hidden");
+
+        nombreInput.value = "";
+
+        nombreInput.required = false;
+
+        residenteSelect.required = true;
+
+        departamentoSelect.disabled = true;
+
+    } else {
+
+        residenteContainer.classList.add("hidden");
+
+        visitanteContainer.classList.remove("hidden");
+
+        nombreInput.required = true;
+
+        residenteSelect.required = false;
+
+        residenteSelect.value = "";
+
+        departamentoSelect.disabled = false;
+
+    }
+
+});
+
+
+// ==========================================
+// SELECCIONAR RESIDENTE
+// ==========================================
+
+residenteSelect.addEventListener("change", () => {
+
+    const option =
+        residenteSelect.options[
+            residenteSelect.selectedIndex
+        ];
+
+    if (!option || !option.dataset.nombre) {
+        return;
+    }
+
+    nombreInput.value =
+        option.dataset.nombre;
+
+    departamentoSelect.value =
+        option.dataset.departamento;
+
+});
+
+
+// ==========================================
+// CARGAR ACCESOS
+// ==========================================
+
+async function cargarAccesos() {
+
+    try {
+
+        const response =
+            await fetch("/api/accesos");
+
+        const accesos =
+            await response.json();
+
+        mostrarAccesos(accesos);
+
+        mostrarHistorial(accesos);
+
+        mostrarEstadisticas(accesos);
+
+    } catch (error) {
+
+        console.error(
+            "Error al cargar accesos:",
+            error
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// MOSTRAR PERSONAS DENTRO
+// ==========================================
+
+function mostrarAccesos(accesos) {
+
+    accessTable.innerHTML = "";
+
+    const filtro =
+        filtroTipo.value;
+
+    let personasDentro =
+        accesos.filter(
+            acceso => acceso.salida === null
+        );
+
+    if (filtro !== "Todos") {
+
+        personasDentro =
+            personasDentro.filter(
+                acceso => acceso.tipo === filtro
+            );
+
+    }
+
+    if (personasDentro.length === 0) {
+
+        accessTable.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty">
+                    No hay personas dentro.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    personasDentro.forEach(acceso => {
+
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${acceso.nombre}</td>
+
+            <td>${acceso.tipo}</td>
+
+            <td>${acceso.departamento}</td>
+
+            <td>${acceso.placas || "-"}</td>
+
+            <td>${acceso.entrada}</td>
+
+            <td>
+                <button
+                    class="exit-button"
+                    onclick="registrarSalida(${acceso.id})">
+                    Registrar salida
+                </button>
+            </td>
+        `;
+
+        accessTable.appendChild(row);
+
+    });
+
+}
+
+
+// ==========================================
+// MOSTRAR HISTORIAL
+// ==========================================
+
+function mostrarHistorial(accesos) {
+
+    historyTable.innerHTML = "";
+
+    accesos.forEach(acceso => {
+
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${acceso.nombre}</td>
+
+            <td>${acceso.tipo}</td>
+
+            <td>${acceso.departamento}</td>
+
+            <td>${acceso.entrada}</td>
+
+            <td>
+                ${acceso.salida || "Dentro"}
+            </td>
+        `;
+
+        historyTable.appendChild(row);
+
+    });
+
+}
+
+
+// ==========================================
+// ESTADÍSTICAS
+// ==========================================
+
+function mostrarEstadisticas(accesos) {
+
+    const dentro =
+        accesos.filter(
+            acceso => acceso.salida === null
+        );
+
+    const residentes =
+        dentro.filter(
+            acceso => acceso.tipo === "Residente"
+        );
+
+    personasDentro.textContent =
+        dentro.length;
+
+    totalAccesos.textContent =
+        accesos.length;
+
+    residentesDentro.textContent =
+        residentes.length;
+
+}
+
+
+// ==========================================
+// REGISTRAR ENTRADA
+// ==========================================
+
+form.addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    let nombre;
+
+    let departamento =
+        departamentoSelect.value;
+
+    const tipoSeleccionado =
+        tipo.value;
+
+    if (tipoSeleccionado === "Residente") {
+
+        const option =
+            residenteSelect.options[
+                residenteSelect.selectedIndex
+            ];
+
+        if (!option || !option.dataset.nombre) {
+
+            alert(
+                "Selecciona un residente."
+            );
+
+            return;
+        }
+
+        nombre =
+            option.dataset.nombre;
+
+        departamento =
+            option.dataset.departamento;
+
+    } else {
+
+        nombre =
+            nombreInput.value.trim();
+
+    }
+
+
+    if (!nombre ||
+        !tipoSeleccionado ||
+        !departamento) {
+
+        alert(
+            "Completa todos los campos obligatorios."
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch("/api/accesos", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    nombre: nombre,
+
+                    tipo: tipoSeleccionado,
+
+                    departamento: departamento,
+
+                    placas:
+                        placasInput.value.trim()
+
+                })
+
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            alert(data.error);
+
+            return;
+
+        }
+
+
+        alert(
+            "Entrada registrada correctamente."
+        );
+
+
+        form.reset();
+
+
+        residenteContainer
+            .classList.add("hidden");
+
+        visitanteContainer
+            .classList.remove("hidden");
+
+        nombreInput.required = true;
+
+        residenteSelect.required = false;
+
+        departamentoSelect.disabled = false;
+
+
+        cargarAccesos();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "No fue posible registrar la entrada."
+        );
+
+    }
+
+});
+
+
+// ==========================================
+// REGISTRAR SALIDA
+// ==========================================
+
+async function registrarSalida(id) {
+
+    const confirmar =
+        confirm(
+            "¿Deseas registrar la salida de esta persona?"
+        );
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `/api/accesos/${id}/salida`,
+                {
+                    method: "PUT"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            alert(data.error);
+
+            return;
+
+        }
+
+
+        cargarAccesos();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "No fue posible registrar la salida."
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// FILTRO
+// ==========================================
+
+filtroTipo.addEventListener(
+    "change",
+    cargarAccesos
+);
+
+
+// ==========================================
+// INICIALIZAR
+// ==========================================
+
 cargarResidentes();
+
 cargarAccesos();
