@@ -2,11 +2,15 @@ const express = require("express");
 const path = require("path");
 
 const app = express();
-const PORT = 3000;
 
+// Render asigna automáticamente el puerto mediante process.env.PORT
+const PORT = process.env.PORT || 3000;
+
+// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+// Datos temporales en memoria
 let accesos = [
     {
         id: 1,
@@ -30,31 +34,55 @@ let accesos = [
 
 let siguienteId = 3;
 
-// Obtener todos los accesos
+
+// ==========================================
+// OBTENER TODOS LOS ACCESOS
+// ==========================================
+
 app.get("/api/accesos", (req, res) => {
     res.json(accesos);
 });
 
-// Registrar entrada
+
+// ==========================================
+// REGISTRAR ENTRADA
+// ==========================================
+
 app.post("/api/accesos", (req, res) => {
-    const { nombre, tipo, departamento, placas } = req.body;
 
-    if (!nombre || !tipo || !departamento) {
-        return res.status(400).json({
-            error: "Nombre, tipo y departamento son obligatorios"
-        });
-    }
-
-    const nuevoAcceso = {
-        id: siguienteId++,
+    const {
         nombre,
         tipo,
         departamento,
+        placas
+    } = req.body;
+
+    // Validación
+    if (!nombre || !tipo || !departamento) {
+
+        return res.status(400).json({
+            error: "Nombre, tipo y departamento son obligatorios."
+        });
+    }
+
+    // Crear nuevo acceso
+    const nuevoAcceso = {
+
+        id: siguienteId++,
+
+        nombre: nombre,
+
+        tipo: tipo,
+
+        departamento: departamento,
+
         placas: placas || "",
+
         entrada: new Date().toLocaleTimeString("es-MX", {
             hour: "2-digit",
             minute: "2-digit"
         }),
+
         salida: null
     };
 
@@ -63,24 +91,36 @@ app.post("/api/accesos", (req, res) => {
     res.status(201).json(nuevoAcceso);
 });
 
-// Registrar salida
+
+// ==========================================
+// REGISTRAR SALIDA
+// ==========================================
+
 app.put("/api/accesos/:id/salida", (req, res) => {
+
     const id = parseInt(req.params.id);
 
-    const acceso = accesos.find(a => a.id === id);
+    const acceso = accesos.find(
+        acceso => acceso.id === id
+    );
 
+    // Si no existe
     if (!acceso) {
+
         return res.status(404).json({
-            error: "Acceso no encontrado"
+            error: "Acceso no encontrado."
         });
     }
 
+    // Si ya tiene salida
     if (acceso.salida) {
+
         return res.status(400).json({
-            error: "La salida ya fue registrada"
+            error: "La salida ya fue registrada."
         });
     }
 
+    // Registrar hora de salida
     acceso.salida = new Date().toLocaleTimeString("es-MX", {
         hour: "2-digit",
         minute: "2-digit"
@@ -89,7 +129,27 @@ app.put("/api/accesos/:id/salida", (req, res) => {
     res.json(acceso);
 });
 
-// Iniciar servidor
+
+// ==========================================
+// PÁGINA PRINCIPAL
+// ==========================================
+
+app.get("/", (req, res) => {
+
+    res.sendFile(
+        path.join(__dirname, "public", "index.html")
+    );
+});
+
+
+// ==========================================
+// INICIAR SERVIDOR
+// ==========================================
+
 app.listen(PORT, () => {
-    console.log(`Servidor funcionando en http://localhost:${PORT}`);
+
+    console.log(
+        `Servidor funcionando en el puerto ${PORT}`
+    );
+
 });
