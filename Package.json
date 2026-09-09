@@ -1,0 +1,13 @@
+{
+  "name": "control-accesos",
+  "version": "1.0.0",
+  "description": "Sistema web de control de accesos a un edificio",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
