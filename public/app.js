@@ -21,6 +21,21 @@ const residentesTable =
 
 
 // ==========================================
+// BADGES PARA TIPO DE VISITANTE
+// ==========================================
+
+const tipoBadges = {
+    "Familia": "badge-familia",
+    "Amigo": "badge-amigo",
+    "Proveedor": "badge-proveedor",
+    "Taxi": "badge-taxi",
+    "Técnico": "badge-tecnico",
+    "Repartidor": "badge-repartidor",
+    "Otro": "badge-otro"
+};
+
+
+// ==========================================
 // MOSTRAR FECHA Y HORA ACTUAL
 // ==========================================
 
@@ -332,7 +347,7 @@ async function cargarVisitas() {
 
         visitasTable.innerHTML = `
             <tr>
-                <td colspan="5">
+                <td class="empty" colspan="5">
                     No hay visitas registradas.
                 </td>
             </tr>
@@ -355,7 +370,11 @@ async function cargarVisitas() {
 
             <td>${visita.residente}</td>
 
-            <td>${visita.tipo}</td>
+            <td>
+                <span class="badge ${tipoBadges[visita.tipo] || "badge-otro"}">
+                    ${visita.tipo}
+                </span>
+            </td>
 
             <td>${visita.timestamp}</td>
 
@@ -379,6 +398,18 @@ async function cargarListaResidentes() {
 
     residentesTable.innerHTML = "";
 
+    if (residentes.length === 0) {
+
+        residentesTable.innerHTML = `
+            <tr>
+                <td class="empty" colspan="2">
+                    No hay residentes registrados.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
 
     residentes.forEach(residente => {
 
