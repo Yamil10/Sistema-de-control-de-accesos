@@ -1,2 +1,10 @@
+<<<<<<< HEAD
 node_modules
 .env
+=======
+# Dependencias
+node_modules/
+
+# Variables de entorno
+.env
+>>>>>>> 109ea1036a902e84166758a596e9d1717af4ed30
